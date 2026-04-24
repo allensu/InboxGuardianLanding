@@ -1,0 +1,14 @@
+{
+  "name": "inboxguardian-landing",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Landing page for 護信者 InboxGuardian - Chrome Extension",
+  "scripts": {
+    "dev": "npx -y serve . -l 3000",
+    "start": "npx -y serve . -l 3000",
+    "preview": "open http://localhost:3000 && npm run dev"
+  },
+  "keywords": ["landing-page", "chrome-extension", "inboxguardian", "護信者"],
+  "author": "AllenSu",
+  "license": "MIT"
+}

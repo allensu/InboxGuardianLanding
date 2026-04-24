@@ -1,0 +1,5 @@
+{
+  "build_command": "echo 'No build needed - pure static HTML'",
+  "output_dir": "public",
+  "serverless": true
+}

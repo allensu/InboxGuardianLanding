@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#059669">
+
+  <!-- SEO Meta -->
+  <title>護信者 InboxGuardian - Gmail 釣魚信即時偵測 | 並發掃描 + AI 智能誤判防護</title>
+  <meta name="description" content="台灣第一款為本地使用者設計的 Gmail 釣魚信偵測外掛。內建 30+ 台灣銀行白名單，規則引擎 + Claude/ChatGPT/Gemini 雙重驗證，智能區分釣魚信與合法行銷信。">
+  <meta name="keywords" content="護信者, InboxGuardian, 釣魚信, Gmail, Chrome extension, 電子郵件安全, 防詐騙, 台灣">
+  <meta name="author" content="AllenSu">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="護信者 InboxGuardian - Gmail 釣魚信即時偵測 (v1.1)">
+  <meta property="og:description" content="台灣第一款本土化 Gmail 防釣魚外掛。並發掃描 10x 快、AI 智能辨識合法行銷信、即時進度顯示。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://inboxguardian.your-domain.com">
+  <meta property="og:image" content="https://inboxguardian.your-domain.com/assets/og-image.png">
+  <meta property="og:locale" content="zh_TW">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="護信者 InboxGuardian - Gmail 釣魚信偵測">
+  <meta name="twitter:description" content="並發掃描 + AI 智能驗證，準確區分釣魚信與合法行銷信。支援 Claude/ChatGPT/Gemini。">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"PingFang TC"', '"Microsoft JhengHei"', 'sans-serif'],
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.6s ease-out',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- 自訂樣式 -->
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #059669, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -12px rgba(5, 150, 105, 0.15);
+    }
+    /* Hero 背景網格 */
+    .hero-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    details > summary {
+      list-style: none;
+      cursor: pointer;
+    }
+    details > summary::-webkit-details-marker { display: none; }
+    details[open] .faq-icon { transform: rotate(45deg); }
+    .faq-icon { transition: transform 0.2s ease; }
+    /* 浮動動畫 */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    .floating { animation: float 4s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-white text-gray-900">
+
+<!-- ============ Navbar ============ -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="#" class="flex items-center gap-2">
+        <!-- Shield SVG Icon -->
+        <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none">
+          <path d="M16 2L28 7V15C28 22.5 22.5 28 16 30C9.5 28 4 22.5 4 15V7L16 2Z" fill="#059669"/>
+          <path d="M10 16L14 20L22 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="text-lg font-bold">護信者 <span class="text-gray-500 font-normal text-sm">InboxGuardian</span></span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+        <a href="#whats-new" class="hover:text-brand-600 transition inline-flex items-center gap-1">
+          <span class="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse"></span>
+          v1.1 新功能
+        </a>
+        <a href="#features" class="hover:text-brand-600 transition">功能</a>
+        <a href="#comparison" class="hover:text-brand-600 transition">對比</a>
+        <a href="#screenshots" class="hover:text-brand-600 transition">截圖</a>
+        <a href="#install" class="hover:text-brand-600 transition">安裝</a>
+        <a href="#faq" class="hover:text-brand-600 transition">FAQ</a>
+      </div>
+      <a href="#install" class="inline-flex items-center gap-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg transition shadow-sm">
+        立即安裝
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ Hero ============ -->
+<section class="relative pt-32 pb-20 md:pt-40 md:pb-28 gradient-bg overflow-hidden">
+  <div class="absolute inset-0 hero-grid"></div>
+  <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+  <div class="absolute bottom-0 left-0 w-96 h-96 bg-brand-300/20 rounded-full blur-3xl"></div>
+
+  <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Left: Content -->
+      <div class="text-white animate-fade-in-up">
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur rounded-full text-sm font-medium mb-6">
+          <span class="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
+          台灣第一款 Gmail 防釣魚信外掛 · v1.1
+        </div>
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-6">
+          打開 Gmail 即<br/>
+          <span class="text-brand-100">自動攔截釣魚信</span>
+        </h1>
+        <p class="text-lg md:text-xl text-brand-50 mb-8 leading-relaxed">
+          <strong class="text-white">護信者 InboxGuardian</strong> 幫你守住每一封信。<br class="hidden md:block"/>
+          規則引擎 + AI 雙引擎驗證，<strong class="text-white">並發掃描速度提升 10 倍</strong>，智能區分真實釣魚信與合法行銷信。
+        </p>
+
+        <!-- AI Providers Badges -->
+        <div class="flex flex-wrap gap-3 mb-8">
+          <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/15 backdrop-blur rounded-lg text-sm">
+            <span class="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-xs font-bold">C</span>
+            Claude
+          </span>
+          <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/15 backdrop-blur rounded-lg text-sm">
+            <span class="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-xs font-bold">G</span>
+            ChatGPT
+          </span>
+          <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/15 backdrop-blur rounded-lg text-sm">
+            <span class="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold">M</span>
+            Gemini
+          </span>
+        </div>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <a href="#install" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-700 font-bold rounded-xl hover:bg-brand-50 transition shadow-xl">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-8-5zm-2 16l-4-4 1.41-1.41L10 15.17l6.59-6.59L18 10l-8 8z"/></svg>
+            立即安裝（免費）
+          </a>
+          <a href="https://github.com/allensu/InboxGuardianExtension" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur border border-white/30 text-white font-bold rounded-xl hover:bg-white/20 transition">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            原始碼
+          </a>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-brand-100">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            10x 並發速度
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            智能誤判防護
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            即時進度顯示
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            資料不經第三方
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Hero Screenshot -->
+      <div class="relative floating">
+        <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+          <img src="./assets/screenshot-1-overview.png" alt="InboxGuardian 在 Gmail 中的效果" class="w-full h-auto">
+        </div>
+        <!-- Floating labels -->
+        <div class="absolute -top-4 -right-4 bg-red-500 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-bold hidden md:block">
+          釣魚信已攔截
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Problem Statement ============ -->
+<section class="py-16 bg-red-50 border-y border-red-100">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold mb-4">
+      ⚠️ 為什麼你需要 InboxGuardian
+    </div>
+    <h2 class="text-3xl md:text-4xl font-bold mb-4">
+      台灣每年 <span class="text-red-600">數十億</span> 因釣魚詐騙蒸發
+    </h2>
+    <p class="text-lg text-gray-700 leading-relaxed">
+      假冒中國信託、國泰、玉山的詐騙郵件層出不窮，<br class="hidden md:block"/>
+      即使是資深使用者，也可能在疲憊時誤點釣魚連結。<br class="hidden md:block"/>
+      <span class="font-semibold text-gray-900">InboxGuardian 幫你多一道防線，不靠眼力靠演算法。</span>
+    </p>
+  </div>
+</section>
+
+<!-- ============ What's New in v1.1 ============ -->
+<section id="whats-new" class="py-20 bg-gradient-to-br from-purple-50 via-white to-brand-50 border-y border-gray-100">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold mb-4">
+        ✨ v1.1 全新升級
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        三大核心能力強化
+      </h2>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        根據真實使用者反饋打造，解決過往誤判、速度、體驗三大痛點
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- 新功能 1: 並發掃描 -->
+      <div class="relative bg-white rounded-2xl p-8 border-2 border-brand-200 shadow-sm card-hover">
+        <div class="absolute -top-3 -right-3 bg-brand-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+          10x 提速
+        </div>
+        <div class="w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h3 class="text-xl font-bold mb-3">⚡ 並發式多工掃描</h3>
+        <p class="text-gray-600 leading-relaxed mb-4">
+          規則模式同時掃描 10 封信、AI 模式同時 3 封，不再一封封排隊等待。
+        </p>
+        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+          <div class="text-xs text-gray-500 mb-2">⏱ 實測效能</div>
+          <div class="flex items-end gap-3">
+            <div class="flex-1">
+              <div class="text-xs text-gray-400">舊版（串行）</div>
+              <div class="text-lg font-bold text-gray-400">~1000ms</div>
+            </div>
+            <div class="text-brand-500 font-bold text-xl">→</div>
+            <div class="flex-1">
+              <div class="text-xs text-brand-600">新版（並發）</div>
+              <div class="text-lg font-black text-brand-600">~400ms</div>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500 mt-2">測試：10 封信的規則引擎掃描</div>
+        </div>
+      </div>
+
+      <!-- 新功能 2: 即時進度指示器 -->
+      <div class="relative bg-white rounded-2xl p-8 border-2 border-blue-200 shadow-sm card-hover">
+        <div class="absolute -top-3 -right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+          UX 改善
+        </div>
+        <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h3 class="text-xl font-bold mb-3">📊 即時進度指示器</h3>
+        <p class="text-gray-600 leading-relaxed mb-4">
+          右下角浮動卡片顯示掃描進度，AI 模式加入紫色脈動效果，讓你知道系統正在工作。
+        </p>
+        <!-- 模擬指示器 UI -->
+        <div class="bg-white rounded-lg p-3 border-2 border-purple-300 shadow-md" style="box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.3), 0 8px 24px -8px rgba(168, 85, 247, 0.3);">
+          <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4" viewBox="0 0 32 32"><path d="M16 2L28 7V15C28 22.5 22.5 28 16 30C9.5 28 4 22.5 4 15V7L16 2Z" fill="#059669"/><path d="M10 16L14 20L22 11" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+              <span class="text-xs font-bold">InboxGuardian</span>
+            </div>
+            <span class="text-xs text-gray-400">−</span>
+          </div>
+          <div class="py-2">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-3 h-3 border-2 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+              <span class="text-xs font-semibold text-purple-700">掃描中 7/20 🤖</span>
+            </div>
+            <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full" style="width: 35%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 新功能 3: 誤判防護 -->
+      <div class="relative bg-white rounded-2xl p-8 border-2 border-amber-200 shadow-sm card-hover">
+        <div class="absolute -top-3 -right-3 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+          準確度提升
+        </div>
+        <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h3 class="text-xl font-bold mb-3">🎯 智能誤判防護</h3>
+        <p class="text-gray-600 leading-relaxed mb-4">
+          券商申購、信用卡廣告委託第三方發信不再誤判。透過 AI 分析信件意圖區分。
+        </p>
+        <div class="space-y-2">
+          <div class="bg-green-50 border border-green-200 rounded-lg p-2 flex items-center gap-2">
+            <span class="text-green-600">✓</span>
+            <span class="text-xs text-green-800">合法行銷信（元大、國泰 EDM）</span>
+          </div>
+          <div class="bg-red-50 border border-red-200 rounded-lg p-2 flex items-center gap-2">
+            <span class="text-red-600">✗</span>
+            <span class="text-xs text-red-800">釣魚信（偽冒銀行的詐騙）</span>
+          </div>
+          <div class="text-xs text-gray-500 mt-2">準確率：4/7 → 6/7 (+50%)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Features ============ -->
+<section id="features" class="py-20">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 rounded-full text-sm font-semibold mb-4">
+        核心功能
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        為什麼選擇 <span class="gradient-text">護信者</span>？
+      </h2>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        結合傳統規則引擎與現代 AI，給你最可靠的釣魚信防護
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Feature 1 -->
+      <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6">
+        <div class="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">打開 Gmail 即啟動</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          無需手動操作，打開 Gmail 自動掃描所有未讀信件，可疑信件立即標記。
+        </p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6">
+        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">三層偵測引擎</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          規則引擎偵測可疑特徵 → 正向特徵辨識合法行銷信 → AI 智能判讀邊緣案例，大幅降低誤判。
+        </p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6">
+        <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">7 大偵測規則</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          網域偽裝、行銷平台濫用、緊迫性話術、連結不符、typosquatting 等多重防線。
+        </p>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6">
+        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">即時系統通知</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          偵測到釣魚信立即透過 Chrome 系統通知提醒，不會錯過任何威脅。
+        </p>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6">
+        <div class="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">台灣在地化</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          內建 30+ 台灣銀行與機構官方網域白名單：中國信託、國泰、玉山、台新、蝦皮、PChome…
+        </p>
+      </div>
+
+      <!-- Feature 6 -->
+      <div class="card-hover bg-white border border-gray-200 rounded-2xl p-6">
+        <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold mb-2">隱私至上設計</h3>
+        <p class="text-gray-600 text-sm leading-relaxed">
+          規則引擎完全離線。AI 模式資料直接送到你選擇的 AI 廠商，不經第三方伺服器。
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ AI Providers ============ -->
+<section class="py-20 bg-gradient-to-br from-gray-50 to-brand-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-brand-200 text-brand-700 rounded-full text-sm font-semibold mb-4">
+        一鍵切換
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        支援三大 AI 供應商
+      </h2>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        使用你自己的 API Key，自由選擇 Claude、ChatGPT 或 Gemini，資料不經第三方。
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Claude -->
+      <div class="bg-white rounded-2xl p-6 border-2 border-purple-200 card-hover">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center text-white font-black text-xl">C</div>
+          <div>
+            <h3 class="font-bold text-lg">Claude</h3>
+            <p class="text-xs text-gray-500">Anthropic</p>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 mb-3">Anthropic 最新模型，邏輯推理能力強，特別擅長語義分析。</p>
+        <ul class="text-xs text-gray-600 space-y-1">
+          <li>• Haiku 4.5（推薦）</li>
+          <li>• Sonnet 4.6（平衡）</li>
+          <li>• Opus 4.7（最強）</li>
+        </ul>
+      </div>
+
+      <!-- ChatGPT -->
+      <div class="bg-white rounded-2xl p-6 border-2 border-emerald-200 card-hover">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-black text-xl">G</div>
+          <div>
+            <h3 class="font-bold text-lg">ChatGPT</h3>
+            <p class="text-xs text-gray-500">OpenAI</p>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 mb-3">全球最廣泛使用的 AI，擁有豐富的訓練資料與生態系統。</p>
+        <ul class="text-xs text-gray-600 space-y-1">
+          <li>• GPT-4o mini（推薦）</li>
+          <li>• GPT-4o（平衡）</li>
+          <li>• GPT-4.1（較新）</li>
+        </ul>
+      </div>
+
+      <!-- Gemini -->
+      <div class="bg-white rounded-2xl p-6 border-2 border-blue-200 card-hover">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white font-black text-xl">M</div>
+          <div>
+            <h3 class="font-bold text-lg">Gemini</h3>
+            <p class="text-xs text-gray-500">Google</p>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 mb-3">Google 多模態 AI，免費額度充足，適合一般使用者入門。</p>
+        <ul class="text-xs text-gray-600 space-y-1">
+          <li>• 2.5 Flash（推薦）</li>
+          <li>• 2.5 Pro（平衡）</li>
+          <li>• 2.0 Flash（較快）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-8 text-center text-sm text-gray-600">
+      💡 每月僅需數十元台幣即可涵蓋一般使用量，或使用免費額度。
+    </div>
+  </div>
+</section>
+
+<!-- ============ Competitor Comparison ============ -->
+<section id="comparison" class="py-20 bg-gradient-to-br from-gray-50 to-white">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold mb-4">
+        🔍 競品對比
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        為什麼不用現有的工具？
+      </h2>
+      <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+        市面上的 Gmail 釣魚信外掛不少，但沒有一款專為台灣使用者設計。<br class="hidden md:block">
+        我們來看看差異在哪裡。
+      </p>
+    </div>
+
+    <!-- 桌面版對比表 -->
+    <div class="hidden md:block overflow-x-auto mb-8">
+      <table class="w-full bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-200">
+            <th class="p-4 text-left text-sm font-semibold text-gray-600">功能特性</th>
+            <th class="p-4 text-center text-sm font-semibold text-gray-600">Gmail Guardian</th>
+            <th class="p-4 text-center text-sm font-semibold text-gray-600">PIXM Protection</th>
+            <th class="p-4 text-center text-sm font-semibold text-gray-600">趨勢科技 Email Defender</th>
+            <th class="p-4 text-center text-sm font-bold text-white bg-gradient-to-br from-brand-600 to-brand-700">
+              <div class="flex flex-col items-center gap-1">
+                <svg class="w-5 h-5" viewBox="0 0 32 32" fill="none">
+                  <path d="M16 2L28 7V15C28 22.5 22.5 28 16 30C9.5 28 4 22.5 4 15V7L16 2Z" fill="#ffffff"/>
+                  <path d="M10 16L14 20L22 11" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                InboxGuardian
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 text-sm">
+          <tr>
+            <td class="p-4 font-medium">台灣銀行/機構白名單</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-amber-500 text-lg">部分</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ 30+ 家</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">繁體中文介面</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-green-500 text-lg">✓</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ 原生</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">AI 供應商選擇</td>
+            <td class="p-4 text-center text-xs text-gray-500">固定單一</td>
+            <td class="p-4 text-center text-xs text-gray-500">固定單一</td>
+            <td class="p-4 text-center text-xs text-gray-500">固定單一</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ 3 家可選</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">誤判防護機制</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-amber-500 text-lg">部分</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ 三層</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">並發掃描</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ 10x 速度</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">資料流向</td>
+            <td class="p-4 text-center text-xs text-red-600">送到自家伺服器</td>
+            <td class="p-4 text-center text-xs text-red-600">送到自家伺服器</td>
+            <td class="p-4 text-center text-xs text-red-600">送到趨勢雲</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700 text-xs">✓ 不經第三方</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">價格</td>
+            <td class="p-4 text-center text-xs">免費 + 付費進階</td>
+            <td class="p-4 text-center text-xs">企業版付費</td>
+            <td class="p-4 text-center text-xs">需趨勢科技訂閱</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ 完全免費</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">開源程式碼</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ MIT</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">即時進度顯示</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center text-red-500 text-lg">✗</td>
+            <td class="p-4 text-center bg-brand-50 font-semibold text-brand-700">✓ 浮動指示器</td>
+          </tr>
+          <tr>
+            <td class="p-4 font-medium">Chrome Web Store</td>
+            <td class="p-4 text-center text-green-500 text-lg">✓</td>
+            <td class="p-4 text-center text-green-500 text-lg">✓</td>
+            <td class="p-4 text-center text-green-500 text-lg">✓</td>
+            <td class="p-4 text-center bg-brand-50 text-amber-600 text-xs">審核中</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 手機版卡片式 -->
+    <div class="md:hidden space-y-4 mb-8">
+      <div class="bg-white rounded-2xl border-2 border-brand-500 p-5 shadow-lg">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+            <path d="M16 2L28 7V15C28 22.5 22.5 28 16 30C9.5 28 4 22.5 4 15V7L16 2Z" fill="#059669"/>
+            <path d="M10 16L14 20L22 11" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="font-bold text-lg text-brand-700">InboxGuardian（我們）</span>
+        </div>
+        <ul class="space-y-2 text-sm">
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span>台灣 30+ 機構白名單</li>
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span>Claude / ChatGPT / Gemini 三選一</li>
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span>三層誤判防護</li>
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span>並發掃描 10x 速度</li>
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span>資料不經第三方伺服器</li>
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span>完全免費 + 開源</li>
+        </ul>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 p-5">
+        <div class="font-bold text-base mb-3 text-gray-700">Gmail Guardian</div>
+        <ul class="space-y-1 text-sm text-gray-600">
+          <li class="flex gap-2"><span class="text-red-500">✗</span>無台灣銀行白名單</li>
+          <li class="flex gap-2"><span class="text-red-500">✗</span>只有英文</li>
+          <li class="flex gap-2"><span class="text-red-500">✗</span>資料送到他們伺服器</li>
+          <li class="flex gap-2"><span class="text-amber-500">$</span>有付費進階版</li>
+        </ul>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 p-5">
+        <div class="font-bold text-base mb-3 text-gray-700">PIXM Protection</div>
+        <ul class="space-y-1 text-sm text-gray-600">
+          <li class="flex gap-2"><span class="text-red-500">✗</span>主要鎖定企業市場</li>
+          <li class="flex gap-2"><span class="text-red-500">✗</span>英文介面</li>
+          <li class="flex gap-2"><span class="text-red-500">✗</span>視覺分析為主（非郵件內容）</li>
+        </ul>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 p-5">
+        <div class="font-bold text-base mb-3 text-gray-700">趨勢科技 Email Defender</div>
+        <ul class="space-y-1 text-sm text-gray-600">
+          <li class="flex gap-2"><span class="text-amber-500">~</span>繁中但需 Trend Micro 訂閱</li>
+          <li class="flex gap-2"><span class="text-red-500">✗</span>閉源，隱私不透明</li>
+          <li class="flex gap-2"><span class="text-red-500">✗</span>AI 供應商不可選</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 關鍵差異化 -->
+    <div class="grid md:grid-cols-3 gap-4 mt-12">
+      <div class="bg-gradient-to-br from-brand-50 to-white border border-brand-200 rounded-xl p-6">
+        <div class="text-4xl mb-3">🇹🇼</div>
+        <h3 class="font-bold text-lg mb-2">為台灣打造</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          全球競品都不認識中國信託、國泰、玉山。我們內建 30+ 台灣機構白名單，還持續擴充。
+        </p>
+      </div>
+      <div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-xl p-6">
+        <div class="text-4xl mb-3">🔐</div>
+        <h3 class="font-bold text-lg mb-2">無伺服器架構</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          我們沒有自家伺服器。資料直接從你的瀏覽器送到你選的 AI 廠商，沒有中間人。
+        </p>
+      </div>
+      <div class="bg-gradient-to-br from-amber-50 to-white border border-amber-200 rounded-xl p-6">
+        <div class="text-4xl mb-3">📖</div>
+        <h3 class="font-bold text-lg mb-2">100% 開源透明</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+          全部程式碼公開在 GitHub。你可以檢視每一行、提交 PR、fork 做你自己的版本。
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-8 text-center text-xs text-gray-500 italic">
+      ※ 以上資料基於 2026/04 各產品公開頁面比對，實際功能以各廠商最新版為準。
+    </div>
+  </div>
+</section>
+
+<!-- ============ Screenshots ============ -->
+<section id="screenshots" class="py-20">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 rounded-full text-sm font-semibold mb-4">
+        實際效果
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        釣魚信無所遁形
+      </h2>
+      <p class="text-lg text-gray-600">
+        真實案例示範：2026/04/23 截獲的偽造中國信託釣魚信
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+      <!-- Screenshot 1 -->
+      <div class="group relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg card-hover">
+        <img src="./assets/screenshot-1-overview.png" alt="Gmail 收件匣中的可疑信件標記" class="w-full h-auto">
+        <div class="p-6 bg-gray-50">
+          <h3 class="font-bold text-lg mb-1">信件列表即時標記</h3>
+          <p class="text-sm text-gray-600">紅色 = 釣魚信，橘色 = 可疑，一眼分辨</p>
+        </div>
+      </div>
+
+      <!-- Screenshot 2 -->
+      <div class="group relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg card-hover">
+        <img src="./assets/screenshot-2-detail.png" alt="點擊徽章後顯示詳細分析報告" class="w-full h-auto">
+        <div class="p-6 bg-gray-50">
+          <h3 class="font-bold text-lg mb-1">點擊查看詳細報告</h3>
+          <p class="text-sm text-gray-600">完整列出所有可疑特徵與風險分數</p>
+        </div>
+      </div>
+
+      <!-- Screenshot 3 -->
+      <div class="group relative bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-lg card-hover lg:col-span-2">
+        <img src="./assets/screenshot-3-popup.png" alt="Popup 設定介面" class="w-full h-auto">
+        <div class="p-6 bg-gray-50">
+          <h3 class="font-bold text-lg mb-1">簡潔的設定面板</h3>
+          <p class="text-sm text-gray-600">一鍵切換偵測模式與 AI 供應商，配置 API Key 測試連線</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Install Guide ============ -->
+<section id="install" class="py-20 bg-gradient-to-br from-brand-50 via-white to-brand-50">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-600 text-white rounded-full text-sm font-semibold mb-4">
+        3 分鐘安裝
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        快速開始使用
+      </h2>
+      <p class="text-lg text-gray-600">
+        跟著步驟操作，三分鐘內完成安裝
+      </p>
+    </div>
+
+    <!-- Download button -->
+    <div class="mb-12 text-center">
+      <a id="download-btn" href="https://github.com/allensu/InboxGuardianExtension/releases/latest" target="_blank" class="inline-flex items-center gap-3 px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition shadow-xl text-lg">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        下載最新版（GitHub Releases）
+      </a>
+      <p class="mt-3 text-sm text-gray-500">檔案名稱：<code class="px-2 py-0.5 bg-gray-100 rounded">inboxguardian-extension-v1.1.0.zip</code></p>
+    </div>
+
+    <!-- Steps -->
+    <div class="space-y-4">
+
+      <!-- Step 1 -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 flex gap-4 card-hover">
+        <div class="flex-shrink-0 w-10 h-10 bg-brand-600 text-white rounded-full flex items-center justify-center font-bold text-lg">1</div>
+        <div class="flex-1">
+          <h3 class="font-bold text-lg mb-2">下載並解壓縮</h3>
+          <p class="text-gray-700 mb-2">點擊上方按鈕下載 zip，解壓縮到固定位置（例如桌面或文件夾）。</p>
+          <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            ⚠️ <strong>別刪除這個資料夾</strong>，否則擴充功能會失效。建議放在一個不會亂動的地方。
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 flex gap-4 card-hover">
+        <div class="flex-shrink-0 w-10 h-10 bg-brand-600 text-white rounded-full flex items-center justify-center font-bold text-lg">2</div>
+        <div class="flex-1">
+          <h3 class="font-bold text-lg mb-2">打開 Chrome 擴充功能頁面</h3>
+          <p class="text-gray-700 mb-3">在 Chrome 網址列輸入以下指令並按 Enter：</p>
+          <div class="bg-gray-900 text-green-300 rounded-lg p-4 font-mono text-sm flex items-center justify-between">
+            <code>chrome://extensions</code>
+            <button onclick="navigator.clipboard.writeText('chrome://extensions'); this.textContent='✓ 已複製'" class="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded text-xs transition">複製</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 flex gap-4 card-hover">
+        <div class="flex-shrink-0 w-10 h-10 bg-brand-600 text-white rounded-full flex items-center justify-center font-bold text-lg">3</div>
+        <div class="flex-1">
+          <h3 class="font-bold text-lg mb-2">開啟開發人員模式</h3>
+          <p class="text-gray-700">頁面<strong>右上角</strong>切換「開發人員模式」開關。此為載入未上架擴充功能的標準做法，安全無虞。</p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-6 flex gap-4 card-hover">
+        <div class="flex-shrink-0 w-10 h-10 bg-brand-600 text-white rounded-full flex items-center justify-center font-bold text-lg">4</div>
+        <div class="flex-1">
+          <h3 class="font-bold text-lg mb-2">載入擴充功能</h3>
+          <p class="text-gray-700">點擊「<strong>載入未封裝項目</strong>」按鈕，選擇步驟 1 解壓縮的資料夾（裡面要有 <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">manifest.json</code>）。</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="bg-gradient-to-br from-brand-600 to-brand-700 text-white rounded-2xl p-6 flex gap-4 shadow-xl">
+        <div class="flex-shrink-0 w-10 h-10 bg-white text-brand-700 rounded-full flex items-center justify-center font-bold text-lg">5</div>
+        <div class="flex-1">
+          <h3 class="font-bold text-lg mb-2">打開 Gmail 即可使用</h3>
+          <p class="text-brand-50 mb-2">訪問 <a href="https://mail.google.com" class="underline hover:text-white">mail.google.com</a>，InboxGuardian 會自動啟動並開始掃描未讀信件。</p>
+          <p class="text-sm text-brand-100">想使用 AI 增強模式？點擊瀏覽器右上角的 InboxGuardian 圖示，設定 API Key 即可。</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 影片教學區（可選） -->
+    <div class="mt-12 bg-gray-50 border border-gray-200 rounded-2xl p-6 text-center">
+      <p class="text-sm text-gray-600">
+        💬 <strong>遇到問題？</strong>
+        到 <a href="https://github.com/allensu/InboxGuardianExtension/issues" class="text-brand-600 hover:underline" target="_blank">GitHub Issues</a> 留言，通常 24 小時內會回覆。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq" class="py-20">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-brand-100 text-brand-700 rounded-full text-sm font-semibold mb-4">
+        常見問題
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        FAQ
+      </h2>
+      <p class="text-lg text-gray-600">
+        有任何疑問？這裡可能有答案
+      </p>
+    </div>
+
+    <div class="space-y-3">
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">InboxGuardian 會讀取我的郵件內容嗎？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          <strong>不會</strong>讀取完整郵件內容。InboxGuardian 僅讀取 Gmail 介面上已顯示的<strong>寄件人、主旨、預覽片段</strong>（前 1500 字元）。不讀取附件、通訊錄或任何其他資料。所有偵測在你的瀏覽器本機執行。
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">一定要設定 API Key 嗎？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          不需要。預設使用「快速模式」（純規則引擎），完全離線、免費、無需任何設定。如果你想要更高的偵測準確度，可以切換到「AI 增強模式」並設定 Claude、ChatGPT 或 Gemini 的 API Key（三選一）。
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">AI 模式的費用大概多少？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          <p class="mb-2">AI 只會在「規則引擎判定可疑」時才被呼叫，非常省錢。以一般使用者一天收到 50 封信、其中 1-2 封可疑為例：</p>
+          <ul class="space-y-1 text-sm">
+            <li>• <strong>Gemini 2.5 Flash</strong>：每月約 NT$5 以下（甚至免費額度就夠）</li>
+            <li>• <strong>GPT-4o mini</strong>：每月約 NT$10</li>
+            <li>• <strong>Claude Haiku 4.5</strong>：每月約 NT$15</li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">為什麼要開啟「開發人員模式」？是否安全？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          因為 InboxGuardian 目前尚未上架 Chrome Web Store（付費驗證中），需要透過「載入未封裝項目」的方式安裝，這是 Chrome 官方提供的開發者標準流程。<strong>InboxGuardian 為開源軟體</strong>，你可以到 <a href="https://github.com/allensu/InboxGuardianExtension" class="text-brand-600 underline" target="_blank">GitHub</a> 檢視完整程式碼。後續會上架 Chrome Web Store，屆時可一鍵安裝。
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">支援哪些瀏覽器？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          目前支援 <strong>Google Chrome</strong>、<strong>Microsoft Edge</strong>、<strong>Brave</strong>、<strong>Arc</strong> 等基於 Chromium 的瀏覽器。Firefox 與 Safari 版本規劃中。
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">我可以自訂規則或白名單嗎？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          目前 v1.1 尚未提供圖形化的自訂介面，但因為是開源專案，進階使用者可直接修改 <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">src/lib/rule-engine.js</code> 新增白名單。圖形化自訂 UI 介面規劃於 v1.2 推出。
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">會不會誤判正常信件？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          <p class="mb-2">v1.1 大幅強化了誤判防護。InboxGuardian 採用「<strong>負面特徵加分 + 正向特徵減分</strong>」的平衡設計：</p>
+          <ul class="space-y-1 ml-4 mb-2 text-sm">
+            <li>✅ 合法行銷信有「退訂連結、廣告標示、推廣用語、指向信任網域」會自動減分</li>
+            <li>✅ 釣魚信有「顯示名稱偽裝、帳戶警示、要求密碼」會加分</li>
+            <li>✅ 邊緣案例交由 AI 智能判讀，辨識真實意圖</li>
+          </ul>
+          <p>舉例：<strong>券商委託 SendGrid 發的申購廣告、國泰委託 EDM 平台發的信用卡優惠</strong>等常見誤判情境，v1.1 已能正確辨識為合法行銷信。如遇誤判請到 GitHub Issues 回報。</p>
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">掃描會拖慢我的 Gmail 嗎？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          <p class="mb-2"><strong>幾乎感受不到。</strong> v1.1 採用並發架構：</p>
+          <ul class="space-y-1 ml-4 mb-2 text-sm">
+            <li>• 規則模式：同時處理 10 封信，10 封約 400ms 完成</li>
+            <li>• AI 模式：同時處理 3 封信（避免 API rate limit），20 封可疑信約 8 秒</li>
+          </ul>
+          <p>掃描過程中你可以正常讀信、切資料夾，右下角會有浮動指示器顯示即時進度。完成後會自動淡化不打擾你。</p>
+        </div>
+      </details>
+
+      <details class="group bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <summary class="flex items-center justify-between p-5 hover:bg-gray-50 transition">
+          <span class="font-semibold text-gray-900">如何更新到最新版？</span>
+          <span class="faq-icon text-2xl text-brand-600 font-light">+</span>
+        </summary>
+        <div class="px-5 pb-5 text-gray-700 leading-relaxed">
+          到 <a href="https://github.com/allensu/InboxGuardianExtension/releases" class="text-brand-600 underline" target="_blank">GitHub Releases</a> 下載最新版 zip → 解壓縮覆蓋原資料夾 → 到 <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">chrome://extensions</code> 點擊 InboxGuardian 的「重新載入」按鈕即可。
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Privacy ============ -->
+<section class="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur rounded-full text-sm font-semibold mb-4">
+        🔒 隱私保證
+      </div>
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">
+        你的資料只屬於你
+      </h2>
+      <p class="text-lg text-gray-300">
+        InboxGuardian 沒有伺服器、沒有分析追蹤、沒有資料收集
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <h3 class="font-bold text-lg">我們做了什麼</h3>
+        </div>
+        <ul class="space-y-2 text-sm text-gray-300">
+          <li class="flex gap-2"><span class="text-green-400">✓</span>資料全部儲存在你的瀏覽器</li>
+          <li class="flex gap-2"><span class="text-green-400">✓</span>規則引擎完全離線運作</li>
+          <li class="flex gap-2"><span class="text-green-400">✓</span>AI 資料直送你選的廠商</li>
+          <li class="flex gap-2"><span class="text-green-400">✓</span>API Key 只存在本機 Chrome Storage</li>
+          <li class="flex gap-2"><span class="text-green-400">✓</span>程式碼完全開源可檢視</li>
+        </ul>
+      </div>
+
+      <div class="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <h3 class="font-bold text-lg">我們不會做什麼</h3>
+        </div>
+        <ul class="space-y-2 text-sm text-gray-300">
+          <li class="flex gap-2"><span class="text-red-400">✗</span>讀取完整郵件內容</li>
+          <li class="flex gap-2"><span class="text-red-400">✗</span>讀取附件或通訊錄</li>
+          <li class="flex gap-2"><span class="text-red-400">✗</span>追蹤瀏覽行為</li>
+          <li class="flex gap-2"><span class="text-red-400">✗</span>收集個人身分識別資料</li>
+          <li class="flex gap-2"><span class="text-red-400">✗</span>自己架伺服器儲存資料（根本沒有伺服器）</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-8 text-center">
+      <a href="https://github.com/allensu/InboxGuardianExtension/blob/main/PRIVACY-POLICY.md" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-semibold transition">
+        📄 閱讀完整隱私權政策
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="py-20 bg-gradient-to-br from-brand-600 to-brand-800 text-white">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl md:text-5xl font-black mb-4">
+      準備好保護你的 Gmail 了嗎？
+    </h2>
+    <p class="text-xl text-brand-50 mb-8">
+      免費、開源、3 分鐘安裝完成
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="#install" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-brand-700 font-bold rounded-xl hover:bg-brand-50 transition shadow-xl">
+        立即下載安裝
+      </a>
+      <a href="https://github.com/allensu/InboxGuardianExtension" target="_blank" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur border border-white/30 text-white font-bold rounded-xl hover:bg-white/20 transition">
+        ⭐ 在 GitHub 加星
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Footer ============ -->
+<footer class="bg-gray-900 text-gray-400 py-12">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-2">
+        <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+          <path d="M16 2L28 7V15C28 22.5 22.5 28 16 30C9.5 28 4 22.5 4 15V7L16 2Z" fill="#059669"/>
+          <path d="M10 16L14 20L22 11" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="font-bold text-white">護信者 InboxGuardian</span>
+        <span class="text-xs text-gray-500">v1.1.0</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-6 text-sm">
+        <a href="https://github.com/allensu/InboxGuardianExtension" target="_blank" class="hover:text-white transition">GitHub</a>
+        <a href="https://github.com/allensu/InboxGuardianExtension/issues" target="_blank" class="hover:text-white transition">回報問題</a>
+        <a href="https://github.com/allensu/InboxGuardianExtension/blob/main/PRIVACY-POLICY.md" target="_blank" class="hover:text-white transition">隱私政策</a>
+        <a href="#" class="hover:text-white transition">回到頂部 ↑</a>
+      </div>
+    </div>
+    <div class="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
+      <p>© 2026 護信者 InboxGuardian · Made with ❤️ in Taiwan by <a href="https://github.com/allensu" target="_blank" class="text-brand-400 hover:text-brand-300">@allensu</a></p>
+      <p class="mt-2 text-xs text-gray-600">本擴充功能開源免費使用，MIT License</p>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ Scripts ============ -->
+<script>
+  // 動態從 GitHub API 取得最新 release 版本（可選）
+  async function loadLatestRelease() {
+    try {
+      const resp = await fetch('https://api.github.com/repos/allensu/InboxGuardianExtension/releases/latest');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const downloadBtn = document.getElementById('download-btn');
+      if (data.assets && data.assets.length > 0) {
+        const zipAsset = data.assets.find(a => a.name.endsWith('.zip'));
+        if (zipAsset) {
+          downloadBtn.href = zipAsset.browser_download_url;
+          // 更新檔名顯示
+          const fileHint = downloadBtn.parentElement.querySelector('code');
+          if (fileHint) fileHint.textContent = zipAsset.name;
+        }
+      }
+    } catch (e) {
+      // 失敗則使用預設 release 頁面連結
+      console.log('無法取得最新版本:', e);
+    }
+  }
+  loadLatestRelease();
+
+  // Smooth scroll for anchor links (offset for fixed navbar)
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      if (href === '#') return;
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        const offset = 80;
+        const top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

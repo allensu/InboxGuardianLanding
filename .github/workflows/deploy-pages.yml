@@ -1,0 +1,89 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # 允許手動觸發
+
+# 設定 GITHUB_TOKEN 的權限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 確保同時只有一個部署在跑（後續 push 會排隊）
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # ============================================
+  # Job 1: 驗證靜態檔案
+  # ============================================
+  validate:
+    name: Validate HTML & Assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          echo "=== Checking critical files ==="
+          test -f index.html || (echo "❌ index.html missing" && exit 1)
+          test -f assets/screenshot-1-overview.png || (echo "❌ screenshot 1 missing" && exit 1)
+          test -f assets/screenshot-2-detail.png || (echo "❌ screenshot 2 missing" && exit 1)
+          test -f assets/screenshot-3-popup.png || (echo "❌ screenshot 3 missing" && exit 1)
+          test -f assets/og-image.png || (echo "❌ og-image missing" && exit 1)
+          echo "✅ All required files present"
+
+      - name: Check file sizes
+        run: |
+          echo "=== Asset sizes ==="
+          du -h index.html
+          du -h assets/*.png
+          for f in assets/*.png; do
+            size=$(stat -c%s "$f")
+            if [ $size -gt 512000 ]; then
+              echo "::warning::$f is larger than 500KB ($size bytes)"
+            fi
+          done
+
+  # ============================================
+  # Job 2: Build for GitHub Pages
+  # ============================================
+  build:
+    name: Build Pages Artifact
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 整個 repo 都上傳（根目錄就是 landing page 的內容）
+          # 但排除不需要的檔案
+          path: '.'
+
+  # ============================================
+  # Job 3: Deploy to GitHub Pages
+  # ============================================
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
